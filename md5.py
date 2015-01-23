@@ -1,6 +1,3 @@
-# testline
-
-
 # F(B,C,D) = (B and C) or (not B and D)
 # G(B,C,D) = (B and D) or (C and not D)
 # H(B,C,D) = B ^ C ^ D
