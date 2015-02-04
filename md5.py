@@ -1,4 +1,5 @@
 import hashlib
+import struct
 # F(B,C,D) = (B and C) or (not B and D)
 # G(B,C,D) = (B and D) or (C and not D)
 # H(B,C,D) = B ^ C ^ D
@@ -14,20 +15,29 @@ S = [7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22, 5,  9, 14, 2
 #     return shift_list[round_number]
 
 def left_rotate(x, c):
-    print (x << c)
-    print (x >> (32-c))
-    return (x << c) | (x >> (32-c))
-    # return ((x << c)%(2**128)) | ((x >> (32-c))%(2**128))
+    # print (x << c)
+    # print (x >> (32-c))
+
+    # print "thing", (x << c) | (x >> (32-c))
+    # print ((x << c)%(2**128)) | ((x >> (32-c))%(2**128))
+    # mod = 32
+    # value = ((x << c)%(2**mod)) | ((x >> (32-c))%(2**mod))
+    value = (x << c) | (x >> (32-c))
+    # value = value % 2**32
+    return value
 
 def read_chunk(in_file):
     chunk = in_file.read(64)
+    chunk = [ord(x) for x in chunk]
     if not chunk:
-        return
+        return ''
     if len(chunk) < 64:
-        chunk += '\200'
+        # chunk += '\200'
+        chunk.append(0x80)
     if len(chunk) < 64:
         for i in range(64 - len(chunk)):
-            chunk += '\000'
+            # chunk += '\000'
+            chunk.append(0x00)
     return chunk
 
 
@@ -38,12 +48,19 @@ if __name__ == "__main__":
     C = c = 0x98badcfe
     D = d = 0x10325476
 
+
     with open("textfile", "rb") as in_file:
+        # chunk = in_file.read(64)
+        # for x in chunk:
+        #     print ord(x)
+        # chunk = [ord(x) for x in chunk]
+
         while True:
             M = read_chunk(in_file)
             if not M:
                 break
 
+        # for M in iter(read_chunk(in_file), ''):
             for i in range(64):
                 case = i / 16
                 if case == 0:
@@ -64,7 +81,7 @@ if __name__ == "__main__":
                 # print "g", g
                 # print "M[g]", M[g]
                 # print "type", type(ord(M[g]))
-                B = B + left_rotate((A + F + K[i] + ord(M[g])), S[i])
+                B = B + left_rotate((A + F + K[i] + M[g]), S[i])
                 A = dTemp
             print len(str(a))
             print len(str(A))
