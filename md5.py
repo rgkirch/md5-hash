@@ -26,78 +26,126 @@ def left_rotate(x, c):
     # value = value % 2**32
     return value
 
-def read_chunk(in_file):
-    chunk = in_file.read(64)
-    chunk = [ord(x) for x in chunk]
-    if not chunk:
-        return ''
-    if len(chunk) < 64:
-        # chunk += '\200'
-        chunk.append(0x80)
-    if len(chunk) < 64:
-        for i in range(64 - len(chunk)):
-            # chunk += '\000'
-            chunk.append(0x00)
-    return chunk
+def read_char():
+    with open("6.txt", "rb") as f:
+        for char in f.read():
+            yield char
 
+def read_chunk():
+    for i in range(64):
+        array.append(read_char())
+    return array
+
+    # chunk = f.read(64)
+    # chunk = [ord(x) for x in chunk]
+    # if not chunk:
+    #     return ''
+    # if len(chunk) < 64:
+    #     # chunk += '\200'
+    #     chunk.append(0x80)
+    # if len(chunk) < 64:
+    #     for i in range(64 - len(chunk)):
+    #         # chunk += '\000'
+    #         chunk.append(0x00)
+    # return chunk
+
+
+def hex_to_char_string(hx, length = 4):
+    a = ""
+    b = bin(hx)
+    print b
+    b = b[2:]
+    while not len(b)%8 == 0:
+        b = "0" + b
+    for i in xrange(length):
+        begin = i*8
+        end = begin + 8
+        a += chr(int(b[begin:end],2))
+    return a
+
+def hex_to_char_list(hx, length = 4):
+    a = []
+    b = bin(hx)
+    b = b[2:]
+    while not len(b)%8 == 0:
+        b = "0" + b
+    for i in xrange(length):
+        begin = i*8
+        end = begin + 8
+        a.append(chr(int(b[begin:end],2)))
+    return a
+
+def hex_to_int_list(hx, length = 4):
+    a = []
+    b = bin(hx)
+    b = b[2:]
+    while not len(b)%8 == 0:
+        b = "0" + b
+    for i in xrange(length):
+        begin = i*8
+        end = begin + 8
+        a.append(int(b[begin:end],2))
+    return a
 
 if __name__ == "__main__":
-    A = a = 0x67452301
-    # A = a = '\147' + '\105' + '\043' + '\001'
-    B = b = 0xefcdab89
-    C = c = 0x98badcfe
-    D = d = 0x10325476
+    A = a = hex_to_int_list(0x67452301)
+    B = b = hex_to_int_list(0xefcdab89)
+    C = c = hex_to_int_list(0x98badcfe)
+    D = d = hex_to_int_list(0x10325476)
 
+    data = []
+    with open("6.txt", "rb") as f:
+        for char in f.read():
+            data.append(char)
 
-    with open("textfile", "rb") as in_file:
-        # chunk = in_file.read(64)
-        # for x in chunk:
-        #     print ord(x)
-        # chunk = [ord(x) for x in chunk]
+    # print chr(ord(data[0])^ord(data[1]))
 
-        while True:
-            M = read_chunk(in_file)
-            if not M:
-                break
+    for r in xrange(len(data)/64):
+        # 64 byte chunks
+        start = r*64
+        # pack 64 bytes into a
+        a0 = [data[start + s] for s in xrange(64)]
+        # b = [a[0:4],a[4:8],a[8:12],a[12:16]]
+        b0 = [a0[x*4:x*4+4] for x in xrange(16)]
+        # make c 16 integers of 4 bytes each
+        # for g in b:
+        #     temp = ""
+        #     # print "temp",type(temp)
+        #     for t in g:
+        #         temp += chr(ord(t))
+        #     c.append(temp)
+        # print bin(ord(data[0]))
+        # print int(c[0],2)
+        # print (int(c[0][0:8], 2))
+        # print "charlie", [bin(t) for t in c]
 
-        # for M in iter(read_chunk(in_file), ''):
-            for i in range(64):
-                case = i / 16
-                if case == 0:
-                    F = (B & C) | ((~B) & D)
-                    g = i
-                elif case == 1:
-                    F = (D & B) | ((~D) & C)
-                    g = ((5 * i) + 1) % 16
-                elif case == 2:
-                    F = B ^ C ^ D
-                    g = ((3 * i) + 5) % 16
-                else:
-                    F = C ^ (B | (~D))
-                    g = (7 * i) % 16
-                dTemp = D
-                D = C
-                C = B
-                # print "g", g
-                # print "M[g]", M[g]
-                # print "type", type(ord(M[g]))
-                B = B + left_rotate((A + F + K[i] + M[g]), S[i])
-                A = dTemp
-            print len(str(a))
-            print len(str(A))
-            print len(str(b))
-            print len(str(B))
-            print len(str(c))
-            print len(str(C))
-            a += int(A)
-            a += int(A)
-            a += int(A)
-            b += int(B)
-            c += int(C)
-            d += int(D)
-        digest = a + b + c + d
-        print "digest",hex(digest)
-        print "length", len(hex(digest))
+        # c = [[reduce(lambda w,z: w + (ord(z) << t), g, 0) for t in range(4)] for g in b]
+
+        # M = [sum([ord(data[r+a+b]) for a in xrange(4)]) for b in xrange(16)]
+        M = b0
+        # print M
+        for i in range(64):
+            case = i / 16
+            if case == 0:
+                F = [(B[n] & C[n]) | ((~B[n]) & D[n]) for n in range(4)]
+                g = i
+            elif case == 1:
+                F = [(D[n] & B[n]) | ((~D[n]) & C[n]) for n in range(4)]
+                g = ((5 * i) + 1) % 16
+            elif case == 2:
+                F = [B[n] ^ C[n] ^ D[n] for n in range(4)]
+                g = ((3 * i) + 5) % 16
+            else:
+                F = [C[n] ^ (B[n] | (~D[n])) for n in range(4)]
+                g = (7 * i) % 16
+            dTemp = D
+            D = C
+            C = B
+            B = B + left_rotate((A + F + hex_to_char_list(K[i]) + M[g]), S[i])
+            A = dTemp
+    digest = a + b + c + d
+    print "digest",hex(digest)
+    print "length", len(hex(digest))
 
 
 
